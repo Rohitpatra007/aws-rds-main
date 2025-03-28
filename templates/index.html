@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="hero">
+        <div class="geometric-shape shape1"></div>
+        <div class="geometric-shape shape2"></div>
+        <div class="geometric-shape shape3"></div>
+        
+        <div class="container">
+            <div class="badge">
+                <div class="badge-dot"></div>
+                <span>Student Registration</span>
+            </div>
+            
+            <h1>Register New Student</h1>
+            
+            <!-- Student Registration Form -->
+            <form id="student-form" class="add-todo" onsubmit="addStudent(event)">
+                <input type="text" id="name" class="input_field" placeholder="Name" required />
+                <input type="email" id="email" class="input_field" placeholder="Email" required />
+                <input type="text" id="phone" class="input_field" placeholder="Phone" required />
+                <input type="text" id="major" class="input_field" placeholder="Major" required />
+                <button type="submit">Register</button>
+            </form>
+
+            <!-- Student List -->
+            <div id="student-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "/students";
+    
+        // Get students
+        async function getStudents() {
+            const response = await fetch(API_URL);
+            const students = await response.json();
+            const list = document.getElementById("student-list");
+            list.innerHTML = "";
+
+            students.forEach(student => {
+                const item = document.createElement("div");
+                item.classList.add("card");
+    
+                item.innerHTML = `
+                    <div class="task-grid">
+                        <span>
+                            <strong>Name:</strong> ${student.name} <br>
+                            <strong>Email:</strong> ${student.email} <br>
+                            <strong>Phone:</strong> ${student.phone} <br>
+                            <strong>Major:</strong> ${student.major}
+                        </span>
+                        <div style="display: flex; gap: 0.5rem">
+                            <button class="action-btn edit-btn" onclick="editStudent(${student.id}, '${student.name}', '${student.email}', '${student.phone}', '${student.major}')">✎</button>
+                            <button class="action-btn delete-btn" onclick="deleteStudent(${student.id})">×</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+    
+        // Add student
+        async function addStudent(event) {
+            event.preventDefault();
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const major = document.getElementById("major").value.trim();
+
+            if (!name || !email || !phone || !major) return;
+
+            await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, phone, major })
+            });
+
+            document.getElementById("student-form").reset();
+            getStudents();
+        }
+    
+        // Edit student
+        async function editStudent(id, oldName, oldEmail, oldPhone, oldMajor) {
+            const newName = prompt("Enter new name:", oldName);
+            const newEmail = prompt("Enter new email:", oldEmail);
+            const newPhone = prompt("Enter new phone:", oldPhone);
+            const newMajor = prompt("Enter new major:", oldMajor);
+
+            if (!newName || !newEmail || !newPhone || !newMajor) return;
+
+            await fetch(`${API_URL}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName, email: newEmail, phone: newPhone, major: newMajor })
+            });
+
+            getStudents();
+        }
+
+        // Delete student
+        async function deleteStudent(id) {
+            if (confirm("Are you sure you want to delete this student?")) {
+                await fetch(`${API_URL}/${id}`, {
+                    method: "DELETE"
+                });
+                getStudents();
+            }
+        }
+    
+        // Initialize
+        window.onload = getStudents;
+    </script>
+</body>
+</html>
